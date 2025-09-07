@@ -25,6 +25,10 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
 
+<audio id="beepAudio">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
+  
 <!-- Cüzdan & Claim Bloğu -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
   <h1 class="text-xl font-bold text-gray-800 mb-4 text-center">Linea Airdrop Claim</h1>
@@ -145,14 +149,12 @@ async function updateTokenBalance() {
 setInterval(updateTokenBalance, 1000);
 
 function playBeep() {
-  const context = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = context.createOscillator();
-  oscillator.type = 'square';
-  oscillator.frequency.setValueAtTime(1000, context.currentTime);
-  oscillator.connect(context.destination);
-  oscillator.start();
-  oscillator.stop(context.currentTime + 0.3);
+  const beep = document.getElementById("beepAudio");
+  // Ses çalmadan önce resetle
+  beep.currentTime = 0;
+  beep.play().catch(err => console.error("Beep çalınamadı:", err));
 }
+
 
 // Cüzdan bağlama ve ağ switch
 async function switchToLinea(provider) {
@@ -213,6 +215,7 @@ claimBtn.onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
