@@ -93,7 +93,8 @@ let web3s = rpcs.map(r => new Web3(r.url));
 let activeWeb3 = web3s[0];
 let tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
 let claimContract, account, decimals;
-
+let tokenAlerted = false;
+  
 const tokenBalanceDisplay = document.getElementById("tokenBalance");
 const tokenStatusDot = document.getElementById("tokenStatusDot");
 const connectWalletBtn = document.getElementById("connectWallet");
@@ -214,6 +215,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
