@@ -24,10 +24,6 @@
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
-
-<audio id="beepAudio">
-  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=" type="audio/wav">
-</audio>
   
 <!-- Cüzdan & Claim Bloğu -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
@@ -97,7 +93,6 @@ let web3s = rpcs.map(r => new Web3(r.url));
 let activeWeb3 = web3s[0];
 let tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
 let claimContract, account, decimals;
-let tokenAlerted = false;
 
 const tokenBalanceDisplay = document.getElementById("tokenBalance");
 const tokenStatusDot = document.getElementById("tokenStatusDot");
@@ -130,12 +125,6 @@ async function updateTokenBalance() {
     const adjusted = balance / (10 ** decimals);
     tokenBalanceDisplay.innerText = adjusted;
 
-    if (adjusted > 0 && !tokenAlerted) {
-      tokenAlerted = true;
-      playBeep();
-      txInfo.innerText = "Token geldi! Claim hazır olabilir.";
-    }
-
     // Nefes alan nokta renk
     tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
     tokenStatusDot.classList.add(balance >= 0 ? "bg-green-500" : "bg-red-500");
@@ -147,17 +136,6 @@ async function updateTokenBalance() {
   }
 }
 setInterval(updateTokenBalance, 1000);
-
-function playBeep() {
-  const beep = document.getElementById("beepAudio");
-  // Resetle ki arka arkaya çalabilsin
-  beep.currentTime = 0;
-  beep.play().catch(err => {
-    console.warn("Beep çalınamadı. Kullanıcı etkileşimi gerekebilir:", err);
-  });
-}
-
-
 
 // Cüzdan bağlama ve ağ switch
 async function switchToLinea(provider) {
@@ -218,6 +196,7 @@ claimBtn.onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
