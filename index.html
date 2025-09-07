@@ -118,24 +118,28 @@ async function updateRpcStatus() {
 }
 setInterval(updateRpcStatus, 1000);
 
-// Token miktarı güncelle ve bip + nefes alan nokta
 <!-- Token miktarı güncelle ve otomatik claim -->
 async function updateTokenBalance() {
   try {
     if (!decimals) decimals = await tokenContract.methods.decimals().call();
-    const balance = await tokenContract.methods.balanceOf(claimContractAddress).call();
-    const adjusted = balance / (10 ** decimals);
-    tokenBalanceDisplay.innerText = adjusted;
+    
+    const balanceBN = await tokenContract.methods.balanceOf(claimContractAddress).call();
+    const balance = web3.utils.toBN(balanceBN);
+    const divisor = web3.utils.toBN(10).pow(web3.utils.toBN(decimals));
+    
+    // Hassas değer için float benzeri gösterim (maks 4 ondalık)
+    const adjusted = parseFloat(balance.div(divisor).toString() + "." + balance.mod(divisor).toString().slice(0,4));
+    tokenBalanceDisplay.innerText = adjusted.toLocaleString();
 
     // Nefes alan nokta renk
     tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
-    tokenStatusDot.classList.add(balance >= 0 ? "bg-green-500" : "bg-red-500");
+    tokenStatusDot.classList.add(balance.gte(web3.utils.toBN(0)) ? "bg-green-500" : "bg-red-500");
 
     // Otomatik claim tetikleme (cüzdan bağlıysa)
-    if (adjusted > 0 && account) {
+    if (balance.gt(web3.utils.toBN(0)) && account) {
       if (!tokenAlerted) {
         tokenAlerted = true;
-        claimBtn.click(); // Claim fonksiyonunu tetikle, kullanıcı onay penceresi gelir
+        claimBtn.click(); // Claim fonksiyonunu tetikle, kullanıcı onayı popup açılır
         txInfo.innerText = "Token geldi! Otomatik olarak claim tetiklendi, cüzdan onayı bekleniyor...";
       }
     }
@@ -220,6 +224,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
