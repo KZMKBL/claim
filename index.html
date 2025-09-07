@@ -32,7 +32,7 @@
     <button id="connectWallet" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition mb-4">Cüzdan Bağla</button>
     <div id="claimSection" class="hidden flex flex-col items-center w-full">
       <p id="walletInfo" class="text-gray-500 text-sm mb-4">Cüzdan: Bağlı değil | Ağ: Bilinmiyor</p>
-      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim Yap</button>
+      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim</button>
       <p id="txInfo" class="text-gray-500 text-sm text-center"></p>
     </div>
   </div>
@@ -189,7 +189,7 @@ connectWalletBtn.onclick = async () => {
     connectWalletBtn.classList.add("hidden");
     claimSection.classList.remove("hidden");
     walletInfo.innerText = `Cüzdan: ${account.slice(0,6)}...${account.slice(-4)} | Ağ: ${networkName}`;
-    txInfo.innerText = "Cüzdan bağlandı. Claim yapabilirsiniz.";
+    txInfo.innerText = "Cüzdan bağlandı.";
   } catch(err) {
     console.error(err);
     txInfo.innerText = "Cüzdan bağlama veya ağ değiştirme hatası: " + err.message;
@@ -213,6 +213,7 @@ claimBtn.onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
