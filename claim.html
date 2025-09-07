@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linea Airdrop Claim</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+
+<!-- Token Miktarı Bloğu -->
+<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
+  <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Kontrattaki Token Miktarı</h2>
+  <div class="text-center">
+    <span id="tokenBalance" class="text-4xl font-bold text-green-600">0</span>
+  </div>
+  <p class="text-gray-500 mt-2 text-center">Realtime güncelleniyor (token geldiğinde claim yapabilirsiniz)</p>
+</div>
+
+<!-- RPC Durum Bloğu -->
+<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
+  <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">RPC Durumu</h2>
+  <div class="flex flex-col items-start" id="rpcStatus">
+    <div class="flex justify-between w-full mb-1"><span>https://rpc.linea.build</span><span id="rpc0Status">❌</span></div>
+    <div class="flex justify-between w-full mb-1"><span>https://1rpc.io/linea</span><span id="rpc1Status">❌</span></div>
+  </div>
+</div>
+
+<!-- Cüzdan & Claim Bloğu -->
+<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md">
+  <h1 class="text-2xl font-extrabold text-gray-800 mb-4 text-center">Linea Airdrop Claim</h1>
+  <div class="flex flex-col items-center">
+    <button id="connectWallet" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition mb-4">Cüzdan Bağla</button>
+    <div id="claimSection" class="hidden flex flex-col items-center w-full">
+      <p id="walletInfo" class="text-gray-500 text-sm mb-4">Cüzdan: Bağlı değil | Ağ: Bilinmiyor</p>
+      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim Yap</button>
+      <p id="txInfo" class="text-gray-500 text-sm text-center"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const claimContractAddress = "0x87bAa1694381aE3eCaE2660d97fe60404080Eb64";
+const lineaTokenAddress = "0x5fbdf89403270a1846f5ae7d113a989f850d1566";
+
+const rpcs = [
+  { url: "https://rpc.linea.build", statusId: "rpc0Status" },
+  { url: "https://1rpc.io/linea", statusId: "rpc1Status" }
+];
+
+const erc20ABI = [
+  { "constant": true, "inputs": [{"name":"owner","type":"address"}], "name": "balanceOf", "outputs": [{"name":"","type":"uint256"}], "type": "function" },
+  { "constant": true, "inputs": [], "name": "decimals", "outputs": [{"name":"","type":"uint8"}], "type": "function" }
+];
+
+const claimABI = [
+  { "constant": false, "inputs": [], "name": "claim", "outputs": [], "type": "function", "stateMutability": "nonpayable" }
+];
+
+const lineaMainnet = { chainId: "0xe708", chainName: "Linea Mainnet" };
+
+let web3s = rpcs.map(r => new Web3(r.url));
+let activeWeb3 = web3s[0];
+let tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
+let claimContract, account, decimals;
+let tokenAlerted = false;
+
+const tokenBalanceDisplay = document.getElementById("tokenBalance");
+const connectWalletBtn = document.getElementById("connectWallet");
+const claimBtn = document.getElementById("claim");
+const claimSection = document.getElementById("claimSection");
+const walletInfo = document.getElementById("walletInfo");
+const txInfo = document.getElementById("txInfo");
+
+// RPC Durumu kontrol
+async function updateRpcStatus() {
+  for (let i = 0; i < rpcs.length; i++) {
+    let statusSymbol = "❌";
+    try {
+      await web3s[i].eth.getBlockNumber();
+      statusSymbol = "✅";
+      activeWeb3 = web3s[i];
+      tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
+    } catch {}
+    document.getElementById(rpcs[i].statusId).innerText = statusSymbol;
+  }
+}
+setInterval(updateRpcStatus, 1000);
+
+// Token miktarı güncelle ve bip
+async function updateTokenBalance() {
+  try {
+    if (!decimals) decimals = await tokenContract.methods.decimals().call();
+    const balance = await tokenContract.methods.balanceOf(claimContractAddress).call();
+    const adjusted = balance / (10 ** decimals);
+    tokenBalanceDisplay.innerText = adjusted;
+    if (adjusted > 0 && !tokenAlerted) {
+      tokenAlerted = true;
+      playBeep();
+      txInfo.innerText = "Token geldi! Claim hazır olabilir.";
+    }
+  } catch(err){
+    console.error("Token balance kontrol hatası:", err);
+    txInfo.innerText = "Token kontrol hatası: " + err.message;
+  }
+}
+setInterval(updateTokenBalance, 1000);
+
+function playBeep() {
+  const context = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = context.createOscillator();
+  oscillator.type = 'square';
+  oscillator.frequency.setValueAtTime(1000, context.currentTime);
+  oscillator.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.3);
+}
+
+// Cüzdan bağlama
+connectWalletBtn.onclick = async () => {
+  if (!window.ethereum && !window.rabby) {
+    txInfo.innerText = "Rabby veya MetaMask yüklü değil!";
+    return;
+  }
+  const provider = window.rabby || window.ethereum;
+  web3 = new Web3(provider);
+  claimContract = new web3.eth.Contract(claimABI, claimContractAddress);
+
+  try {
+    const accounts = await provider.request({ method: "eth_requestAccounts" });
+    account = accounts[0];
+    const chainId = await web3.eth.getChainId();
+    const networkName = chainId === parseInt(lineaMainnet.chainId,16) ? "Linea Mainnet" : "Bilinmeyen Ağ";
+
+    connectWalletBtn.classList.add("hidden");
+    claimSection.classList.remove("hidden");
+    walletInfo.innerText = `Cüzdan: ${account.slice(0,6)}...${account.slice(-4)} | Ağ: ${networkName}`;
+    txInfo.innerText = "Cüzdan bağlandı. Claim yapabilirsiniz.";
+  } catch(err) {
+    console.error(err);
+    txInfo.innerText = "Cüzdan bağlama hatası: " + err.message;
+  }
+};
+
+// Claim işlemi
+claimBtn.onclick = async () => {
+  if (!claimContract || !account) return;
+  try {
+    txInfo.innerText = "İşlem gönderiliyor...";
+    const tx = await claimContract.methods.claim().send({ from: account });
+    txInfo.innerHTML = `İşlem hash: <a href="https://lineascan.build/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>`;
+  } catch(err) {
+    console.error(err);
+    txInfo.innerText = "Claim hatası: " + err.message;
+  }
+};
+</script>
+</body>
+</html>
