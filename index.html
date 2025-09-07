@@ -150,10 +150,13 @@ setInterval(updateTokenBalance, 1000);
 
 function playBeep() {
   const beep = document.getElementById("beepAudio");
-  // Ses çalmadan önce resetle
+  // Resetle ki arka arkaya çalabilsin
   beep.currentTime = 0;
-  beep.play().catch(err => console.error("Beep çalınamadı:", err));
+  beep.play().catch(err => {
+    console.warn("Beep çalınamadı. Kullanıcı etkileşimi gerekebilir:", err);
+  });
 }
+
 
 
 // Cüzdan bağlama ve ağ switch
@@ -215,6 +218,7 @@ claimBtn.onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
