@@ -6,29 +6,46 @@
 <title>Linea Airdrop Claim</title>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Nefes alan nokta animasyonu */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+.pulse-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-left: 10px;
+  display: inline-block;
+  animation: pulse 1s infinite;
+}
+</style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
 
 <!-- Token Miktarı Bloğu -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4 flex items-center justify-center space-x-4">
-  <img src="https://via.placeholder.com/40" alt="Token Icon" class="w-10 h-10">
-  <div class="text-center">
-    <h2 class="text-xl font-bold text-gray-800 mb-2">Kontrattaki Token Miktarı</h2>
-    <span id="tokenBalance" class="text-4xl font-bold text-green-600">0</span>
+  <h2 class="text-xl font-bold text-gray-800 mb-0">Kontrattaki Token Miktarı</h2>
+  <div class="flex items-center ml-2">
+    <img src="https://img.cryptorank.io/funds/linea1718974427353.png" alt="Token Icon" class="w-8 h-8 mr-2">
+    <span id="tokenBalance" class="text-3xl font-bold text-green-600">0</span>
+    <span id="tokenStatusDot" class="pulse-dot bg-red-500"></span>
   </div>
 </div>
 
 <!-- RPC Durum Bloğu -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
-  <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">RPC Durumu</h2>
+  <h2 class="text-lg font-semibold text-gray-800 mb-2 text-center">RPC Durumu</h2>
   <div class="flex flex-col items-start" id="rpcStatus">
-    <div class="flex justify-between items-center w-full mb-2 p-2 rounded bg-red-500" id="rpc0Box">
+    <div class="flex justify-between w-full mb-1 text-sm">
       <span>https://rpc.linea.build</span>
-      <span id="rpc0Status" class="font-bold text-white px-2 py-1 rounded">❌</span>
+      <span id="rpc0Status" class="text-gray-700 font-bold">❌</span>
     </div>
-    <div class="flex justify-between items-center w-full mb-2 p-2 rounded bg-red-500" id="rpc1Box">
+    <div class="flex justify-between w-full mb-1 text-sm">
       <span>https://1rpc.io/linea</span>
-      <span id="rpc1Status" class="font-bold text-white px-2 py-1 rounded">❌</span>
+      <span id="rpc1Status" class="text-gray-700 font-bold">❌</span>
     </div>
   </div>
 </div>
@@ -51,8 +68,8 @@ const claimContractAddress = "0x87bAa1694381aE3eCaE2660d97fe60404080Eb64";
 const lineaTokenAddress = "0x5fbdf89403270a1846f5ae7d113a989f850d1566";
 
 const rpcs = [
-  { url: "https://rpc.linea.build", statusId: "rpc0Status", boxId: "rpc0Box" },
-  { url: "https://1rpc.io/linea", statusId: "rpc1Status", boxId: "rpc1Box" }
+  { url: "https://rpc.linea.build", statusId: "rpc0Status" },
+  { url: "https://1rpc.io/linea", statusId: "rpc1Status" }
 ];
 
 const erc20ABI = [
@@ -79,6 +96,7 @@ let claimContract, account, decimals;
 let tokenAlerted = false;
 
 const tokenBalanceDisplay = document.getElementById("tokenBalance");
+const tokenStatusDot = document.getElementById("tokenStatusDot");
 const connectWalletBtn = document.getElementById("connectWallet");
 const claimBtn = document.getElementById("claim");
 const claimSection = document.getElementById("claimSection");
@@ -89,35 +107,38 @@ const txInfo = document.getElementById("txInfo");
 async function updateRpcStatus() {
   for (let i = 0; i < rpcs.length; i++) {
     let statusSymbol = "❌";
-    let box = document.getElementById(rpcs[i].boxId);
     try {
       await web3s[i].eth.getBlockNumber();
       statusSymbol = "✅";
       activeWeb3 = web3s[i];
       tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
-      box.classList.add("bg-green-500"); box.classList.remove("bg-red-500");
-    } catch {
-      box.classList.add("bg-red-500"); box.classList.remove("bg-green-500");
-    }
+    } catch {}
     document.getElementById(rpcs[i].statusId).innerText = statusSymbol;
   }
 }
 setInterval(updateRpcStatus, 1000);
 
-// Token miktarı güncelle ve bip
+// Token miktarı güncelle ve bip + nefes alan nokta
 async function updateTokenBalance() {
   try {
     if (!decimals) decimals = await tokenContract.methods.decimals().call();
     const balance = await tokenContract.methods.balanceOf(claimContractAddress).call();
     const adjusted = balance / (10 ** decimals);
     tokenBalanceDisplay.innerText = adjusted;
+
     if (adjusted > 0 && !tokenAlerted) {
       tokenAlerted = true;
       playBeep();
       txInfo.innerText = "Token geldi! Claim hazır olabilir.";
     }
+
+    // Nefes alan nokta renk
+    tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
+    tokenStatusDot.classList.add(balance >= 0 ? "bg-green-500" : "bg-red-500");
   } catch(err){
     console.error("Token balance kontrol hatası:", err);
+    tokenStatusDot.classList.remove("bg-green-500");
+    tokenStatusDot.classList.add("bg-red-500");
     txInfo.innerText = "Token kontrol hatası: " + err.message;
   }
 }
