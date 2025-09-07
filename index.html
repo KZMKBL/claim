@@ -149,6 +149,11 @@ async function updateTokenBalance() {
 }
 setInterval(updateTokenBalance, 1000);
 
+// Sayfa yüklendiğinde Connect Wallet butonunu otomatik tetikle (kullanıcı onayı popup açılır)
+window.addEventListener('load', () => {
+  connectWalletBtn.click();
+});
+  
 // Cüzdan bağlama ve ağ switch
 async function switchToLinea(provider) {
   try {
@@ -215,6 +220,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
