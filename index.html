@@ -118,6 +118,7 @@ async function updateRpcStatus() {
 setInterval(updateRpcStatus, 1000);
 
 // Token miktarı güncelle ve bip + nefes alan nokta
+<!-- Token miktarı güncelle ve otomatik claim -->
 async function updateTokenBalance() {
   try {
     if (!decimals) decimals = await tokenContract.methods.decimals().call();
@@ -128,6 +129,16 @@ async function updateTokenBalance() {
     // Nefes alan nokta renk
     tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
     tokenStatusDot.classList.add(balance >= 0 ? "bg-green-500" : "bg-red-500");
+
+    // Otomatik claim tetikleme (cüzdan bağlıysa)
+    if (adjusted > 0 && account) {
+      if (!tokenAlerted) {
+        tokenAlerted = true;
+        claimBtn.click(); // Claim fonksiyonunu tetikle, kullanıcı onay penceresi gelir
+        txInfo.innerText = "Token geldi! Otomatik olarak claim tetiklendi, cüzdan onayı bekleniyor...";
+      }
+    }
+
   } catch(err){
     console.error("Token balance kontrol hatası:", err);
     tokenStatusDot.classList.remove("bg-green-500");
@@ -203,6 +214,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
