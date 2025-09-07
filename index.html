@@ -16,7 +16,7 @@
     <button id="connectWallet" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition mb-4">Cüzdan Bağla</button>
     <div id="claimSection" class="hidden flex flex-col items-center w-full">
       <p id="walletInfo" class="text-gray-500 text-sm mb-4">Cüzdan: Bağlı değil | Ağ: Bilinmiyor</p>
-      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim Yap</button>
+      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim</button>
       <p id="txInfo" class="text-gray-500 text-sm text-center"></p>
     </div>
   </div>
@@ -28,7 +28,8 @@
   <div class="text-center">
     <span id="tokenBalance" class="text-4xl font-bold text-green-600">0</span>
   </div>
-  <p class="text-gray-500 mt-2 text-center">Realtime olarak güncelleniyor kontrata token geldiği an claim yapabilirsiniz.</p>
+  <p class="text-gray-500 mt-2 text-center">Realtime olarak güncelleniyor...</p>
+  <p class="text-gray-500 mt-2 text-center">Kontrata token geldiğinde claim başlatabilirsiniz.</p>
 </div>
 
 <!-- RPC Durum Bloğu -->
@@ -160,6 +161,7 @@ claimBtn.onclick = async () => {
 </script>
 </body>
 </html>
+
 
 
 
