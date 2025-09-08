@@ -60,6 +60,10 @@
       <span>https://1rpc.io/linea</span>
       <span id="rpc1Status" class="text-gray-700 font-bold">❌</span>
     </div>
+    <div class="flex justify-between w-full mb-1 text-sm">
+      <span>https://linea-rpc.rpcdot.com</span>
+      <span id="rpc2Status" class="text-gray-700 font-bold">❌</span>
+    </div>
   </div>
 </div>
 
@@ -69,7 +73,8 @@ const lineaTokenAddress = "0x1789e0043623282d5dcc7f213d703c6d8bafbb04";
 
 const rpcs = [
   { url: "https://rpc.linea.build", statusId: "rpc0Status" },
-  { url: "https://1rpc.io/linea", statusId: "rpc1Status" }
+  { url: "https://1rpc.io/linea", statusId: "rpc1Status" },
+  { url: "https://linea-rpc.rpcdot.com", statusId: "rpc2Status" }
 ];
 
 const erc20ABI = [
@@ -224,6 +229,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
