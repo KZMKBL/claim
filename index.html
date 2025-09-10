@@ -115,15 +115,28 @@ const walletInfo = document.getElementById("walletInfo");
 const txInfo = document.getElementById("txInfo");
 
 async function updateRpcStatus() {
+  let foundWorking = false;
+
   for (let i = 0; i < rpcs.length; i++) {
     let statusSymbol = "❌";
     try {
       await web3s[i].eth.getBlockNumber();
       statusSymbol = "✅";
-      activeWeb3 = web3s[i];
-      tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
+
+      // Sadece ilk çalışan RPC’yi aktif yap
+      if (!foundWorking) {
+        activeWeb3 = web3s[i];
+        tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
+        foundWorking = true;
+      }
     } catch {}
     document.getElementById(rpcs[i].statusId).innerText = statusSymbol;
+  }
+
+  // Hiç çalışan yoksa kırmızıya çek
+  if (!foundWorking) {
+    tokenStatusDot.classList.remove("bg-green-500");
+    tokenStatusDot.classList.add("bg-red-500");
   }
 }
 setInterval(updateRpcStatus, 1000);
@@ -225,6 +238,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
