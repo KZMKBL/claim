@@ -217,18 +217,24 @@ connectWalletBtn.onclick = async () => {
 };
 
 claimBtn.onclick = async () => {
-  if (!claimContract || !account) return;
+  if (!account) return;
   const provider = window.rabby || window.ethereum;
   try {
-    await switchToLinea(provider); // Claim öncesi ağ kontrolü
+    await switchToLinea(provider);
+
+    // Aktif çalışan RPC ile provider'ı bağla
+    const web3WithProvider = new Web3(provider);
+    const freshClaimContract = new web3WithProvider.eth.Contract(claimABI, claimContractAddress);
+
     txInfo.innerText = "İşlem gönderiliyor...";
-    const tx = await claimContract.methods.claim().send({ from: account });
+    const tx = await freshClaimContract.methods.claim().send({ from: account });
     txInfo.innerHTML = `İşlem hash: <a href="https://lineascan.build/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>`;
   } catch(err) {
     console.error(err);
     txInfo.innerText = "Claim hatası: " + err.message;
   }
 };
+
 </script>
 
 <div class="mt-10 mb-4 text-center text-gray-500 text-sm flex justify-center items-center space-x-1">
@@ -238,6 +244,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
