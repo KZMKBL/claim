@@ -172,9 +172,9 @@ async function updateTokenBalance() {
 }
 setInterval(updateTokenBalance, 1000);
 
-// window.addEventListener('load', () => {
-//   connectWalletBtn.click();
-// });
+window.addEventListener('load', () => {
+  connectWalletBtn.click();
+});
   
 async function switchToLinea(provider) {
   try {
@@ -244,6 +244,7 @@ claimBtn.onclick = async () => {
   
 </body>
 </html>
+
 
 
 
