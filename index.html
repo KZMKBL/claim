@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linea Airdrop Claim</title>
+<title>Linea Token Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -23,19 +23,8 @@
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
-  
-<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
-  <h1 class="text-xl font-bold text-gray-800 mb-4 text-center">Linea Airdrop Claim</h1>
-  <div class="flex flex-col items-center">
-    <button id="connectWallet" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition mb-4">Cüzdan Bağla</button>
-    <div id="claimSection" class="hidden flex flex-col items-center w-full">
-      <p id="walletInfo" class="text-gray-500 text-sm mb-4">Cüzdan: Bağlı değil | Ağ: Bilinmiyor</p>
-      <button id="claim" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition w-full mb-2">Claim</button>
-      <p id="txInfo" class="text-gray-500 text-sm text-center"></p>
-    </div>
-  </div>
-</div>
-  
+
+<!-- Token Miktarı -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
   <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Kontrattaki Token Miktarı</h2>
   <div class="flex items-center justify-center">
@@ -45,6 +34,7 @@
   </div>
 </div>
 
+<!-- RPC Durumları -->
 <div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
   <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">RPC</h2>
   <div class="flex flex-col items-start" id="rpcStatus">
@@ -88,31 +78,13 @@ const erc20ABI = [
   { "constant": true, "inputs": [], "name": "decimals", "outputs": [{"name":"","type":"uint8"}], "type": "function" }
 ];
 
-const claimABI = [
-  { "constant": false, "inputs": [], "name": "claim", "outputs": [], "type": "function", "stateMutability": "nonpayable" }
-];
-
-const lineaMainnet = {
-  chainId: "0xe708",
-  chainName: "Linea Mainnet",
-  rpcUrls: ["https://rpc.linea.build"],
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  blockExplorerUrls: ["https://lineascan.build"]
-};
-
 let web3s = rpcs.map(r => new Web3(r.url));
 let activeWeb3 = web3s[0];
 let tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
-let claimContract, account, decimals;
-let tokenAlerted = false;
+let decimals;
   
 const tokenBalanceDisplay = document.getElementById("tokenBalance");
 const tokenStatusDot = document.getElementById("tokenStatusDot");
-const connectWalletBtn = document.getElementById("connectWallet");
-const claimBtn = document.getElementById("claim");
-const claimSection = document.getElementById("claimSection");
-const walletInfo = document.getElementById("walletInfo");
-const txInfo = document.getElementById("txInfo");
 
 async function updateRpcStatus() {
   let foundWorking = false;
@@ -123,7 +95,6 @@ async function updateRpcStatus() {
       await web3s[i].eth.getBlockNumber();
       statusSymbol = "✅";
 
-      // Sadece ilk çalışan RPC’yi aktif yap
       if (!foundWorking) {
         activeWeb3 = web3s[i];
         tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
@@ -133,7 +104,6 @@ async function updateRpcStatus() {
     document.getElementById(rpcs[i].statusId).innerText = statusSymbol;
   }
 
-  // Hiç çalışan yoksa kırmızıya çek
   if (!foundWorking) {
     tokenStatusDot.classList.remove("bg-green-500");
     tokenStatusDot.classList.add("bg-red-500");
@@ -146,127 +116,30 @@ async function updateTokenBalance() {
     if (!decimals) decimals = await tokenContract.methods.decimals().call();
     
     const balanceBN = await tokenContract.methods.balanceOf(claimContractAddress).call();
-    const balance = web3.utils.toBN(balanceBN);
-    const divisor = web3.utils.toBN(10).pow(web3.utils.toBN(decimals));
+    const balance = activeWeb3.utils.toBN(balanceBN);
+    const divisor = activeWeb3.utils.toBN(10).pow(activeWeb3.utils.toBN(decimals));
     
-    const adjusted = parseFloat(balance.div(divisor).toString() + "." + balance.mod(divisor).toString().slice(0,4));
+    const adjusted = parseFloat(
+      balance.div(divisor).toString() + "." + balance.mod(divisor).toString().slice(0,4)
+    );
     tokenBalanceDisplay.innerText = adjusted.toLocaleString();
 
     tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
-    tokenStatusDot.classList.add(balance.gte(web3.utils.toBN(0)) ? "bg-green-500" : "bg-red-500");
-
-    if (balance.gt(web3.utils.toBN(0)) && account) {
-      if (!tokenAlerted) {
-        tokenAlerted = true;
-        claimBtn.click(); // Claim fonksiyonunu tetikle, kullanıcı onayı popup açılır
-        txInfo.innerText = "Token geldi! Otomatik olarak claim tetiklendi, cüzdan onayı bekleniyor...";
-      }
-    }
+    tokenStatusDot.classList.add(balance.gte(activeWeb3.utils.toBN(0)) ? "bg-green-500" : "bg-red-500");
 
   } catch(err){
     console.error("Token balance kontrol hatası:", err);
     tokenStatusDot.classList.remove("bg-green-500");
     tokenStatusDot.classList.add("bg-red-500");
-    txInfo.innerText = "Token kontrol hatası: " + err.message;
   }
 }
 setInterval(updateTokenBalance, 1000);
-
-window.addEventListener('load', () => {
-  connectWalletBtn.click();
-});
-  
-async function switchToLinea(provider) {
-  try {
-    await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: lineaMainnet.chainId }] });
-  } catch(switchError) {
-    if (switchError.code === 4902) {
-      await provider.request({ method: "wallet_addEthereumChain", params: [lineaMainnet] });
-    } else {
-      throw switchError;
-    }
-  }
-}
-
-connectWalletBtn.onclick = async () => {
-  if (!window.ethereum && !window.rabby) {
-    txInfo.innerText = "Rabby veya MetaMask yüklü değil!";
-    return;
-  }
-  const provider = window.rabby || window.ethereum;
-  web3 = new Web3(provider);
-  claimContract = new web3.eth.Contract(claimABI, claimContractAddress);
-
-  try {
-    const accounts = await provider.request({ method: "eth_requestAccounts" });
-    account = accounts[0];
-
-    await switchToLinea(provider);
-
-    const chainId = await web3.eth.getChainId();
-    const networkName = chainId === parseInt(lineaMainnet.chainId,16) ? "Linea Mainnet" : "Bilinmeyen Ağ";
-
-    connectWalletBtn.classList.add("hidden");
-    claimSection.classList.remove("hidden");
-    walletInfo.innerText = `Cüzdan: ${account.slice(0,6)}...${account.slice(-4)} | Ağ: ${networkName}`;
-    txInfo.innerText = "Cüzdan bağlandı.";
-  } catch(err) {
-    console.error(err);
-    txInfo.innerText = "Cüzdan bağlama veya ağ değiştirme hatası: " + err.message;
-  }
-};
-
-claimBtn.onclick = async () => {
-  if (!account) return;
-  const provider = window.rabby || window.ethereum;
-  try {
-    await switchToLinea(provider);
-
-    // Aktif çalışan RPC ile provider'ı bağla
-    const web3WithProvider = new Web3(provider);
-    const freshClaimContract = new web3WithProvider.eth.Contract(claimABI, claimContractAddress);
-
-    txInfo.innerText = "İşlem gönderiliyor...";
-    const tx = await freshClaimContract.methods.claim().send({ from: account });
-    txInfo.innerHTML = `İşlem hash: <a href="https://lineascan.build/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>`;
-  } catch(err) {
-    console.error(err);
-    txInfo.innerText = "Claim hatası: " + err.message;
-  }
-};
-
 </script>
 
 <div class="mt-10 mb-4 text-center text-gray-500 text-sm flex justify-center items-center space-x-1">
   <span>❤️ Made with love by</span>
   <a href="https://x.com/KZMKBL" target="_blank" class="text-blue-500 hover:underline font-semibold">KZMKBL</a>
 </div>
-  
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
