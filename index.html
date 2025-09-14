@@ -1,76 +1,128 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linea Token Tracker</title>
-<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.5); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.7; }
-}
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-left: 10px;
-  display: inline-block;
-  animation: pulse 1s infinite;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linea Token Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      color: white;
+    }
+    canvas#stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-left: 10px;
+      display: inline-block;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.7; }
+    }
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+	
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+<body>
 
-<!-- Token Miktarı -->
-<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
-  <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Kontrattaki Token Miktarı</h2>
-  <div class="flex items-center justify-center">
-    <img src="https://img.cryptorank.io/funds/linea1718974427353.png" alt="Token Icon" class="w-8 h-8 mr-2">
-    <span id="tokenBalance" class="text-3xl font-bold text-black-600">0</span>
-    <span id="tokenStatusDot" class="pulse-dot bg-red-500"></span>
+<!-- Yıldızlı Arkaplan -->
+<canvas id="stars"></canvas>
+
+<!-- Token Kartı -->
+<!-- Token Kartı -->
+<div class="absolute inset-0 flex items-center justify-center">
+  <div class="relative rounded-3xl p-8 w-11/12 max-w-md text-center liquid-glass">
+    <h2 class="text-2xl font-bold text-white mb-6">Kontrattaki Token Miktarı</h2>
+    <div class="flex items-center justify-center">
+      <img src="https://img.cryptorank.io/funds/linea1718974427353.png" alt="Token Icon" class="w-10 h-10 mr-3">
+      <span id="tokenBalance" class="text-4xl font-extrabold text-white-400 drop-shadow-lg">0</span>
+      <span id="tokenStatusDot" class="pulse-dot bg-red-500"></span>
+    </div>
   </div>
 </div>
 
-<!-- RPC Durumları -->
-<div class="bg-white shadow-xl rounded-2xl p-6 w-11/12 max-w-md mb-4">
-  <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">RPC</h2>
-  <div class="flex flex-col items-start" id="rpcStatus">
-    <div class="flex justify-between w-full mb-1 text-sm">
-      <span>https://rpc.linea.build</span>
-      <span id="rpc0Status" class="text-gray-700 font-bold">❌</span>
-    </div>
-    <div class="flex justify-between w-full mb-1 text-sm">
-      <span>https://1rpc.io/linea</span>
-      <span id="rpc1Status" class="text-gray-700 font-bold">❌</span>
-    </div>
-    <div class="flex justify-between w-full mb-1 text-sm">
-      <span>https://linea-rpc.rpcdot.com</span>
-      <span id="rpc2Status" class="text-gray-700 font-bold">❌</span>
-    </div>
-    <div class="flex justify-between w-full mb-1 text-sm">
-      <span>https://linea.getanode.io</span>
-      <span id="rpc3Status" class="text-gray-700 font-bold">❌</span>
-    </div>
-    <div class="flex justify-between w-full mb-1 text-sm">
-      <span>https://linea2.getanode.io</span>
-      <span id="rpc4Status" class="text-gray-700 font-bold">❌</span>
-    </div>
-  </div>
+<!-- Footer -->
+<div class="footer">
+  ❤️ Made with love by 
+  <a href="https://x.com/KZMKBL" target="_blank" class="text-blue-400 hover:underline font-semibold">KZMKBL</a>
 </div>
 
 <script>
+/* === STAR BACKGROUND === */
+const canvas = document.getElementById("stars");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+let stars = [];
+for (let i = 0; i < 250; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    radius: Math.random() * 1.5,
+    speed: Math.random() * 0.6 + 0.2
+  });
+}
+
+function animateStars() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  stars.forEach(star => {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    star.y += star.speed;
+    if (star.y > canvas.height) {
+      star.y = 0;
+      star.x = Math.random() * canvas.width;
+    }
+  });
+
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+/* === TOKEN & RPC === */
 const claimContractAddress = "0x87bAa1694381aE3eCaE2660d97fe60404080Eb64";
 const lineaTokenAddress = "0x1789e0043623282d5dcc7f213d703c6d8bafbb04";
 
 const rpcs = [
-  { url: "https://rpc.linea.build", statusId: "rpc0Status" },
-  { url: "https://1rpc.io/linea", statusId: "rpc1Status" },
-  { url: "https://linea-rpc.rpcdot.com", statusId: "rpc2Status" },
-  { url: "https://linea.getanode.io", statusId: "rpc3Status" },
-  { url: "https://linea2.getanode.io", statusId: "rpc4Status" }
+  { url: "https://rpc.linea.build" },
+  { url: "https://1rpc.io/linea" },
+  { url: "https://linea-rpc.rpcdot.com" },
+  { url: "https://linea.getanode.io" },
+  { url: "https://linea2.getanode.io" }
 ];
 
 const erc20ABI = [
@@ -82,7 +134,7 @@ let web3s = rpcs.map(r => new Web3(r.url));
 let activeWeb3 = web3s[0];
 let tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
 let decimals;
-  
+
 const tokenBalanceDisplay = document.getElementById("tokenBalance");
 const tokenStatusDot = document.getElementById("tokenStatusDot");
 
@@ -90,18 +142,14 @@ async function updateRpcStatus() {
   let foundWorking = false;
 
   for (let i = 0; i < rpcs.length; i++) {
-    let statusSymbol = "❌";
     try {
       await web3s[i].eth.getBlockNumber();
-      statusSymbol = "✅";
-
       if (!foundWorking) {
         activeWeb3 = web3s[i];
         tokenContract = new activeWeb3.eth.Contract(erc20ABI, lineaTokenAddress);
         foundWorking = true;
       }
     } catch {}
-    document.getElementById(rpcs[i].statusId).innerText = statusSymbol;
   }
 
   if (!foundWorking) {
@@ -109,7 +157,7 @@ async function updateRpcStatus() {
     tokenStatusDot.classList.add("bg-red-500");
   }
 }
-setInterval(updateRpcStatus, 1000);
+setInterval(updateRpcStatus, 2000);
 
 async function updateTokenBalance() {
   try {
@@ -119,9 +167,7 @@ async function updateTokenBalance() {
     const balance = activeWeb3.utils.toBN(balanceBN);
     const divisor = activeWeb3.utils.toBN(10).pow(activeWeb3.utils.toBN(decimals));
     
-    const adjusted = parseFloat(
-      balance.div(divisor).toString() + "." + balance.mod(divisor).toString().slice(0,4)
-    );
+    const adjusted = parseFloat(balance.div(divisor).toString() + "." + balance.mod(divisor).toString().slice(0,4));
     tokenBalanceDisplay.innerText = adjusted.toLocaleString();
 
     tokenStatusDot.classList.remove("bg-red-500","bg-green-500");
@@ -133,13 +179,8 @@ async function updateTokenBalance() {
     tokenStatusDot.classList.add("bg-red-500");
   }
 }
-setInterval(updateTokenBalance, 1000);
+setInterval(updateTokenBalance, 2000);
 </script>
-
-<div class="mt-10 mb-4 text-center text-gray-500 text-sm flex justify-center items-center space-x-1">
-  <span>❤️ Made with love by</span>
-  <a href="https://x.com/KZMKBL" target="_blank" class="text-blue-500 hover:underline font-semibold">KZMKBL</a>
-</div>
 
 </body>
 </html>
